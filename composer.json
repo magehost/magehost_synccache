@@ -9,7 +9,7 @@
             "email":"jeroen@magehost.pro"
         }
     ],
-    "license": "MIT",
+    "license": "BSD-3-Clause",
     "type": "magento2-module",
     "require": {
         "php": "~5.6.0|~7.0.0",
