@@ -1,0 +1,40 @@
+{
+    "name": "magehost/synccache",
+    "version": "0.1.0",
+    "description": "MageHost_SyncCache: sync cache cleaning among multiple nodes in a cluster setup",
+    "homepage":"https://github.com/magehost/magehost_synccache",
+    "authors":[
+        {
+            "name":"MageHost.pro - Jeroen Vermeulen",
+            "email":"jeroen@magehost.pro"
+        }
+    ],
+    "license": "MIT",
+    "type": "magento2-module",
+    "require": {
+        "php": "~5.6.0|~7.0.0",
+        "magento/magento-composer-installer": "*",
+        "colinmollenhour/cache-backend-file":"*",
+        "colinmollenhour/cache-backend-redis":"*"
+    },
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "MageHost\\SyncCache\\": ""
+        },
+        "classmap": [
+            "MageHost/Cm/Cache/Backend/Redis.php",
+            "MageHost/Cm/Cache/Backend/File.php"
+        ]
+    },
+    "extra": {
+        "map": [
+            [
+                "*",
+                "MageHost/SyncCache"
+            ]
+        ]
+    }
+}
