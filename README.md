@@ -21,3 +21,6 @@ php bin/magento setup:upgrade
 php bin/magento setup:di:compile
 
 ```
+
+# Description #
+**This extension is free, licence: [BSD-3-Clause](https://github.com/magehost/synccache/blob/master/LICENSE).**
