@@ -18,16 +18,16 @@
         "colinmollenhour/cache-backend-redis":"*"
     },
     "autoload": {
+        "classmap": [
+            "MageHost/Cm/Cache/Backend/Redis.php",
+            "MageHost/Cm/Cache/Backend/File.php"
+        ],
         "files": [
             "registration.php"
         ],
         "psr-4": {
             "MageHost\\SyncCache\\": ""
-        },
-        "classmap": [
-            "MageHost/Cm/Cache/Backend/Redis.php",
-            "MageHost/Cm/Cache/Backend/File.php"
-        ]
+        }
     },
     "extra": {
         "map": [

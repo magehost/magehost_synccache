@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <system>
+            <magehost_cachesync>
+                <sync_cache_cleaning>0</sync_cache_cleaning>
+                <nodes>node.domain.tld:8080</nodes>
+                <protocol>auto</protocol>
+                <host_header></host_header>
+            </magehost_cachesync>
+        </system>
+    </default>
+</config>

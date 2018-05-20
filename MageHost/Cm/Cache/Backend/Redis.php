@@ -167,7 +167,7 @@ class MageHost_Cm_Cache_Backend_Redis extends \Cm_Cache_Backend_Redis
     public function clean($mode = \Zend_Cache::CLEANING_MODE_ALL, $tags = array())
     {
         $result = false;
-        $transportObject = new \Varien_Object;
+        $transportObject = new \Magento\Framework\DataObject();
         /** @noinspection PhpUndefinedMethodInspection */
         $transportObject->setMode( $mode );
         /** @noinspection PhpUndefinedMethodInspection */
