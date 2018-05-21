@@ -17,8 +17,8 @@ php bin/magento setup:di:compile
 # Usage #
 * You need to configure `MageHost_Cm_Cache_Backend_Redis` or `MageHost_Cm_Cache_Backend_File` as cache backend in `app/etc/env.php`.
 These are extended from [Collin Mollenhour's cache classes](https://github.com/colinmollenhour/Cm_Cache_Backend_Redis)
-* After installation go *System > Integrations* in the Admin to create an integration with the API *System > MageHost CacheSync* enabled.
-* Go to *Stores > Configuration > ADVANCED > System > MageHost CacheSync* to select the integration and enter the nodes.
+* After installation go **System > Integrations** in the Admin to create an integration with the API *System > MageHost CacheSync* enabled.
+* Go to **Stores > Configuration > ADVANCED > System > MageHost CacheSync** to select the integration and enter the nodes.
 
 # Uninstall #
 ```
