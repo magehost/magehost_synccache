@@ -1,6 +1,6 @@
 {
     "name": "magehost/synccache",
-    "version": "0.1.0",
+    "version": "0.1.2",
     "description": "MageHost_SyncCache: sync cache cleaning among multiple nodes in a cluster setup",
     "homepage":"https://github.com/magehost/magehost_synccache",
     "authors":[
@@ -12,7 +12,6 @@
     "license": "BSD-3-Clause",
     "type": "magento2-module",
     "require": {
-        "php": "~5.6.0|~7.0.0",
         "magehost/magehost_cm_cache_backend-m2":"*",
         "magento/framework": ">=100.0",
         "magento/module-backend": ">=100.0",
