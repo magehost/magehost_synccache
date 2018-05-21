@@ -6,6 +6,7 @@ Sync cache cleaning among multiple nodes in a cluster setup.
 
 ```
 composer config repositories.magehost_synccache vcs git@github.com:magehost/magehost_synccache.git
+composer config repositories.magehost_cm_cache_backend-m2 vcs git@github.com:magehost/magehost_cm_cache_backend-m2.git
 composer require magehost/synccache
 php bin/magento module:enable MageHost_SyncCache
 php bin/magento setup:upgrade
@@ -17,6 +18,7 @@ php bin/magento setup:di:compile
 php bin/magento module:disable MageHost_SyncCache
 composer remove magehost/synccache
 composer config --unset repositories.magehost_synccache
+composer config --unset repositories.magehost_cm_cache_backend-m2
 php bin/magento setup:upgrade
 php bin/magento setup:di:compile
 

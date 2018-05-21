@@ -10,7 +10,7 @@
                 </field>
                 <field id="integration_id" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Integration</label>
-                    <source_model>Magento\Integration\Model\ResourceModel\Integration\Collection</source_model>
+                    <source_model>MageHost\SyncCache\Model\Config\Source\Integration</source_model>
                     <depends>
                         <field id="sync_cache_cleaning">1</field>
                     </depends>

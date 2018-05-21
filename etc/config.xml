@@ -6,8 +6,7 @@
             <magehost_cachesync>
                 <sync_cache_cleaning>0</sync_cache_cleaning>
                 <nodes>node.domain.tld:8080</nodes>
-                <protocol>auto</protocol>
-                <host_header></host_header>
+                <protocol>http_ssloffloaded</protocol>
             </magehost_cachesync>
         </system>
     </default>

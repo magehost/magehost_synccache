@@ -14,7 +14,6 @@ class Clean implements CleanInterface
     public function __construct(
         \Magento\Framework\Webapi\Rest\Request $request,
         \Magento\Framework\App\Cache\Frontend\Pool $cacheFrontendPool,
-        // \Magento\Framework\Cache\FrontendInterface $cache,  // Cannot instantiate interface Magento\\Framework\\Cache\\FrontendInterfac
         \Psr\Log\LoggerInterface $logger
     )
     {
@@ -33,11 +32,20 @@ class Clean implements CleanInterface
      */
     public function clean($from, $mode, $tags_json) {
         $tags = json_decode($tags_json);
-        $this->_logger->addInfo(
-            sprintf("%s:  from:%s  mode:%s  tags:%s",
-                    __CLASS__, $from, $mode, implode(",",$tags)
+        $hostname = gethostname();
+        $this->_logger->info(
+            sprintf("%s:  from:%s  to:%s  mode:%s  tags:%s",
+                    __CLASS__, $from, $hostname, $mode, implode(",",$tags)
             )
         );
+        if ($hostname == $from) {
+            $this->_logger->info(
+                sprintf("%s:  Loop protection!",
+                    __CLASS__
+                )
+            );
+            return false;
+        }
         $result = null;
         foreach ($this->_cacheFrontendPool as $cacheFrontend) {
             $frontendResult = $cacheFrontend->getBackend()->clean($mode,$tags);
