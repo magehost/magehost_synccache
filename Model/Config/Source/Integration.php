@@ -20,7 +20,7 @@ class Integration implements \Magento\Framework\Option\ArrayInterface
      */
     public function toOptionArray()
     {
-        $result = array();
+        $result = [];
         foreach ($this->_collection->getData() as $data) {
             $result[] = ['value' =>  $data['consumer_id'], 'label' => $data['name']];
         }

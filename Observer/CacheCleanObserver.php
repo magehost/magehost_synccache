@@ -33,8 +33,8 @@ class CacheCleanObserver implements ObserverInterface
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Framework\Registry $registry,
         \Magento\Framework\App\RequestInterface $request
-    )
-    {
+    ) {
+    
         $this->_logger = $logger;
         $this->_restClient = $restClient;
         $this->_scopeConfig = $scopeConfig;
@@ -48,15 +48,15 @@ class CacheCleanObserver implements ObserverInterface
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $registryVar = __CLASS__ . '::' . __FUNCTION__;
-        if ($this->_registry->registry($registryVar) ) {
+        if ($this->_registry->registry($registryVar)) {
             // We are already in this function, prevent endless recursion.
             return;
         }
-        if (false !== strpos($this->_request->getRequestUri(),'/magehost/synccache/')) {
+        if (false !== strpos($this->_request->getRequestUri(), '/magehost/synccache/')) {
             // We are already handling our API request, prevent endless sub requests.
             return;
         }
-        $this->_registry->register($registryVar,true);
+        $this->_registry->register($registryVar, true);
         if ($this->_scopeConfig->isSetFlag(self::CONFIG_PATH.'/sync_cache_cleaning')) {
             /** @var \Magento\Framework\DataObject $transportObject */
             $transportObject = $observer->getTransport();
@@ -114,9 +114,10 @@ class CacheCleanObserver implements ObserverInterface
      *
      * @return array - Local IPs
      */
-    protected function getLocalIPs() {
-        $result = array();
-        if ( function_exists('shell_exec') ) {
+    protected function getLocalIPs()
+    {
+        $result = [];
+        if (function_exists('shell_exec')) {
             $result = $this->readIPs('ip addr');
             if (empty($result)) {
                 $result = $this->readIPs('ifconfig -a');
@@ -135,17 +136,18 @@ class CacheCleanObserver implements ObserverInterface
      * @param $cmd   - can be 'ip addr' or 'ifconfig -a'
      * @return array - IP numbers
      */
-    protected function readIPs( $cmd ) {
-        $result = array();
-        $lines = explode( "\n", trim(shell_exec($cmd.' 2>/dev/null')) );
-        foreach( $lines as $line ) {
-            $matches = array();
-            if ( preg_match('|inet6?\s+(?:addr\:\s*)?([\:\.\w]+)|',$line,$matches) ) {
+    protected function readIPs($cmd)
+    {
+        $result = [];
+        $lines = explode("\n", trim(shell_exec($cmd.' 2>/dev/null')));
+        foreach ($lines as $line) {
+            $matches = [];
+            if (preg_match('|inet6?\s+(?:addr\:\s*)?([\:\.\w]+)|', $line, $matches)) {
                 $result[$matches[1]] = 1;
             }
         }
-        unset( $result['127.0.0.1'] );
-        unset( $result['::1'] );
+        unset($result['127.0.0.1']);
+        unset($result['::1']);
         return array_keys($result);
     }
 }

@@ -32,16 +32,21 @@ class Local
      * @param int $integrationId
      * @return bool - True if succesful.
      */
-    public function setIntegrationId($integrationId) {
+    public function setIntegrationId($integrationId)
+    {
         if (empty($integrationId)) {
-            $this->_logger->error(sprintf('%s: Integration ID not set',__CLASS__));
+            $this->_logger->error(sprintf('%s: Integration ID not set', __CLASS__));
             return false;
         }
         try {
             $this->_integration = $this->_integrationService->get($integrationId);
         } catch (\Magento\Framework\Exception\IntegrationException $e) {
-            $this->_logger->error(sprintf('%s: Error using integration %d: %s',
-                __CLASS__, $integrationId, $e->getMessage()));
+            $this->_logger->error(sprintf(
+                '%s: Error using integration %d: %s',
+                __CLASS__,
+                $integrationId,
+                $e->getMessage()
+            ));
             return false;
         }
         return true;
@@ -53,9 +58,10 @@ class Local
      * @param bool $sslOffloaded
      * @return bool|mixed
      */
-    public function get($url,$hostHeader='',$sslOffloaded=false) {
+    public function get($url, $hostHeader = '', $sslOffloaded = false)
+    {
         if (empty($this->_integration)) {
-            $this->_logger->error(sprintf('%s: No integration selected',__CLASS__));
+            $this->_logger->error(sprintf('%s: No integration selected', __CLASS__));
             return false;
         }
 
@@ -78,15 +84,17 @@ class Local
                 $signUrlParts['scheme'] = 'https';
             }
             $signUrl = $this->unparse_url($signUrlParts);
-error_log($signUrl);
+            error_log($signUrl);
         }
 
-        $data['oauth_signature'] = $this->_oauthHttpUtility->sign( $data,
+        $data['oauth_signature'] = $this->_oauthHttpUtility->sign(
+            $data,
             $data['oauth_signature_method'],
             $this->_integration->getConsumerSecret(),
             $this->_integration->getTokenSecret(),
             'GET',
-            $signUrl );
+            $signUrl
+        );
 
         $curl = curl_init();
 
@@ -107,14 +115,15 @@ error_log($signUrl);
             CURLOPT_HTTPHEADER => $headers
         ]);
 
-        $this->_logger->info(sprintf("%s: Calling %s",__CLASS__,$url));
+        $this->_logger->info(sprintf("%s: Calling %s", __CLASS__, $url));
         $result = curl_exec($curl);
         curl_close($curl);
-        $this->_logger->info(sprintf("%s: Result: %s", __CLASS__, var_export($result,1)));
+        $this->_logger->info(sprintf("%s: Result: %s", __CLASS__, var_export($result, 1)));
         return $result;
     }
 
-    private function unparse_url($parsed_url) {
+    private function unparse_url($parsed_url)
+    {
         $scheme   = isset($parsed_url['scheme']) ? $parsed_url['scheme'] . '://' : '';
         $host     = isset($parsed_url['host']) ? $parsed_url['host'] : '';
         $port     = isset($parsed_url['port']) ? ':' . $parsed_url['port'] : '';

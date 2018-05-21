@@ -1,5 +1,6 @@
 <?php
 namespace MageHost\SyncCache\Model;
+
 use MageHost\SyncCache\Api\CleanInterface;
 
 class Clean implements CleanInterface
@@ -15,8 +16,8 @@ class Clean implements CleanInterface
         \Magento\Framework\Webapi\Rest\Request $request,
         \Magento\Framework\App\Cache\Frontend\Pool $cacheFrontendPool,
         \Psr\Log\LoggerInterface $logger
-    )
-    {
+    ) {
+    
         $this->_request = $request;
         $this->_cacheFrontendPool = $cacheFrontendPool;
         $this->_logger = $logger;
@@ -30,17 +31,24 @@ class Clean implements CleanInterface
      * @param string $tags_json - json encoded array of tags
      * @return boolean true if no problem
      */
-    public function clean($from, $mode, $tags_json) {
+    public function clean($from, $mode, $tags_json)
+    {
         $tags = json_decode($tags_json);
         $hostname = gethostname();
         $this->_logger->info(
-            sprintf("%s:  from:%s  to:%s  mode:%s  tags:%s",
-                    __CLASS__, $from, $hostname, $mode, implode(",",$tags)
+            sprintf(
+                "%s:  from:%s  to:%s  mode:%s  tags:%s",
+                __CLASS__,
+                $from,
+                $hostname,
+                $mode,
+                implode(",", $tags)
             )
         );
         if ($hostname == $from) {
             $this->_logger->info(
-                sprintf("%s:  Loop protection!",
+                sprintf(
+                    "%s:  Loop protection!",
                     __CLASS__
                 )
             );
@@ -48,7 +56,7 @@ class Clean implements CleanInterface
         }
         $result = null;
         foreach ($this->_cacheFrontendPool as $cacheFrontend) {
-            $frontendResult = $cacheFrontend->getBackend()->clean($mode,$tags);
+            $frontendResult = $cacheFrontend->getBackend()->clean($mode, $tags);
             if (is_null($result)) {
                 $result = $frontendResult;
             } else {

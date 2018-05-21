@@ -13,9 +13,14 @@ $method = 'GET';
 $host = 'm2dev.magehost.pro';
 $from = gethostname();
 $mode = 'matchingTag';
-$tags = array('aa','bb','cc','dd');
-$url = sprintf( 'https://%s/rest/V1/magehost/synccache/clean/%s/%s/%s/',
-                $host, $from, urlencode($mode), urlencode(json_encode($tags)) );
+$tags = ['aa','bb','cc','dd'];
+$url = sprintf(
+    'https://%s/rest/V1/magehost/synccache/clean/%s/%s/%s/',
+    $host,
+    $from,
+    urlencode($mode),
+    urlencode(json_encode($tags))
+);
 
 echo "Calling ".$url."\n";
 
@@ -29,12 +34,14 @@ $data = [
 ];
 
 $util = new \Zend_Oauth_Http_Utility();
-$data['oauth_signature'] = $util->sign( $data,
-                                        $data['oauth_signature_method'],
-                                        $consumerSecret,
-                                        $accessTokenSecret,
-                                        $method,
-                                        $url );
+$data['oauth_signature'] = $util->sign(
+    $data,
+    $data['oauth_signature_method'],
+    $consumerSecret,
+    $accessTokenSecret,
+    $method,
+    $url
+);
 
 //echo "oauth_signature: " . $data['oauth_signature'] . "\n";
 
