@@ -9,15 +9,15 @@ class CacheCleanObserver implements ObserverInterface
     const CONFIG_PATH = 'system/magehost_cachesync';
 
     /** @var \Psr\Log\LoggerInterface */
-    protected $_logger;
+    private $logger;
     /** @var \MageHost\SyncCache\Model\RestClient\Local */
-    protected $_restClient;
+    private $restClient;
     /** @var \Magento\Framework\App\Config\ScopeConfigInterface */
-    protected $_scopeConfig;
+    private $scopeConfig;
     /** @var \Magento\Framework\Registry */
-    protected $_registry;
-    /** @var \Magento\Framework\App\RequestInterface */
-    protected $_request;
+    private $registry;
+    /** @var \Magento\Framework\UrlInterface */
+    private $url;
 
     /**
      * CacheCleanObserver constructor.
@@ -25,21 +25,20 @@ class CacheCleanObserver implements ObserverInterface
      * @param \MageHost\SyncCache\Model\RestClient\Local $restClient
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
      * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Framework\App\RequestInterface $request
+     * @param \Magento\Framework\UrlInterface $url
      */
     public function __construct(
         \Psr\Log\LoggerInterface $logger,
         \MageHost\SyncCache\Model\RestClient\Local $restClient,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Framework\Registry $registry,
-        \Magento\Framework\App\RequestInterface $request
+        \Magento\Framework\UrlInterface $url
     ) {
-    
-        $this->_logger = $logger;
-        $this->_restClient = $restClient;
-        $this->_scopeConfig = $scopeConfig;
-        $this->_registry = $registry;
-        $this->_request = $request;
+        $this->logger = $logger;
+        $this->restClient = $restClient;
+        $this->scopeConfig = $scopeConfig;
+        $this->registry = $registry;
+        $this->url = $url;
     }
 
     /**
@@ -48,85 +47,111 @@ class CacheCleanObserver implements ObserverInterface
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $registryVar = __CLASS__ . '::' . __FUNCTION__;
-        if ($this->_registry->registry($registryVar)) {
+        if ($this->registry->registry($registryVar)) {
             // We are already in this function, prevent endless recursion.
             return;
         }
-        if (false !== strpos($this->_request->getRequestUri(), '/magehost/synccache/')) {
+        $this->registry->register($registryVar, true);
+        if (false !== strpos($this->url->getCurrentUrl(), '/magehost/synccache/')) {
             // We are already handling our API request, prevent endless sub requests.
+            $this->registry->unregister($registryVar);
             return;
         }
-        $this->_registry->register($registryVar, true);
-        if ($this->_scopeConfig->isSetFlag(self::CONFIG_PATH.'/sync_cache_cleaning')) {
-            /** @var \Magento\Framework\DataObject $transportObject */
-            $transportObject = $observer->getTransport();
-            $integrationOK = $this->_restClient->setIntegrationId(
-                $this->_scopeConfig->getValue(self::CONFIG_PATH.'/integration_id')
-            );
-            if ($integrationOK) {
-                $nodes = explode("\n", $this->_scopeConfig->getValue(self::CONFIG_PATH . '/nodes'));
-                $localHostname = gethostname();
-                $localIPs = $this->getLocalIPs();
-                foreach ($nodes as $node) {
-                    $node = trim($node);
-                    if (empty($node)) {
-                        continue;
-                    }
-                    $nodeSplit = explode(':', $node);
-                    $nodeHost = $nodeSplit[0];
-                    if (preg_match('/^\d+\.\d+\.\d+\.\d+$/', $nodeHost)) {
-                        $nodeIP = $nodeHost;
-                    } else {
-                        $nodeIP = gethostbyname($nodeHost);
-                    }
-                    if ($nodeHost == $localHostname || in_array($nodeIP, $localIPs)) {
-                        // This is local, skip host
-                        continue;
-                    }
-                    $sslOffloaded = false;
-                    $urlProtocol = $this->_scopeConfig->getValue(self::CONFIG_PATH . '/protocol');
-                    if ('http_ssloffloaded' == $urlProtocol) {
-                        $urlProtocol = 'http';
-                        $sslOffloaded = true;
-                    }
-                    $url = sprintf(
-                        '%s://%s/rest/V1/magehost/synccache/clean/%s/%s/%s/',
-                        $urlProtocol,
-                        $node,
-                        $localHostname,
-                        urlencode($transportObject->getMode()),
-                        urlencode(json_encode($transportObject->getTags()))
-                    );
-                    $this->_restClient->get(
-                        $url,
-                        $this->_scopeConfig->getValue(self::CONFIG_PATH . '/host_header'),
-                        $sslOffloaded
-                    );
-                }
-            }
+        if (! $this->scopeConfig->isSetFlag(self::CONFIG_PATH.'/sync_cache_cleaning')) {
+            // Cache cleaning is not enabled in configuration
+            $this->registry->unregister($registryVar);
+            return;
         }
-        $this->_registry->unregister($registryVar);
+        /** @var \Magento\Framework\DataObject $transportObject */
+        $integrationOK = $this->restClient->setIntegrationId(
+            $this->scopeConfig->getValue(self::CONFIG_PATH.'/integration_id')
+        );
+        if (! $integrationOK) {
+            // Configured integration id is not working
+            $this->registry->unregister($registryVar);
+            return;
+        }
+
+        $transportObject = $observer->getTransport();
+        $nodes = explode("\n", $this->scopeConfig->getValue(self::CONFIG_PATH . '/nodes'));
+        $localHostname = gethostname();
+        $sslOffloaded = false;
+        $urlProtocol = $this->scopeConfig->getValue(self::CONFIG_PATH . '/protocol');
+        if ('http_ssl_offloaded' == $urlProtocol) {
+            $urlProtocol = 'http';
+            $sslOffloaded = true;
+        }
+        foreach ($nodes as $node) {
+            $node = trim($node);
+            if (!$this->checkUseNode($node)) {
+                continue;
+            }
+            $url = sprintf(
+                '%s://%s/rest/V1/magehost/synccache/clean/%s/%s/%s/',
+                $urlProtocol,
+                $node,
+                $localHostname,
+                urlencode($transportObject->getMode()),
+                urlencode(json_encode($transportObject->getTags()))
+            );
+            $this->restClient->get(
+                $url,
+                $this->scopeConfig->getValue(self::CONFIG_PATH . '/host_header'),
+                $sslOffloaded
+            );
+        }
+        $this->registry->unregister($registryVar);
     }
 
+    /**
+     * Check if a cluster node should be called or skipped
+     *
+     * @param string $node
+     * @return bool
+     */
+    private function checkUseNode($node)
+    {
+        if (empty($node)) {
+            return false;
+        }
+        $nodeSplit = explode(':', $node);
+        $nodeHost = $nodeSplit[0];
+        if (preg_match('/^\d+\.\d+\.\d+\.\d+$/', $nodeHost)) {
+            $nodeIP = $nodeHost;
+        } else {
+            $nodeIP = gethostbyname($nodeHost);
+        }
+        if ($nodeHost == gethostname()) {
+            // Node is the local hostname, skip host
+            return false;
+        }
+        if (in_array($nodeIP, $this->getLocalIPs())) {
+            // Node IP is a local IP, skip host
+            return false;
+        }
+        return true;
+    }
 
     /**
      * Get the local IPs of a Linux, FreeBSD or Mac server
      *
      * @return array - Local IPs
      */
-    protected function getLocalIPs()
+    private function getLocalIPs()
     {
-        $result = [];
-        if (function_exists('shell_exec')) {
-            $result = $this->readIPs('ip addr');
-            if (empty($result)) {
-                $result = $this->readIPs('ifconfig -a');
+        static $result = []; // for caching
+        if (empty($result)) {
+            if (function_exists('shell_exec')) {
+                $result = $this->readIPs('ip addr');
+                if (empty($result)) {
+                    $result = $this->readIPs('ifconfig -a');
+                }
             }
+            if (!empty($_SERVER['SERVER_ADDR'])) {
+                $result[] = $_SERVER['SERVER_ADDR'];
+            }
+            $result = array_unique($result);
         }
-        if (!empty($_SERVER['SERVER_ADDR'])) {
-            $result[] = $_SERVER['SERVER_ADDR'];
-        }
-        $result = array_unique($result);
         return $result;
     }
 
@@ -136,7 +161,7 @@ class CacheCleanObserver implements ObserverInterface
      * @param $cmd   - can be 'ip addr' or 'ifconfig -a'
      * @return array - IP numbers
      */
-    protected function readIPs($cmd)
+    private function readIPs($cmd)
     {
         $result = [];
         $lines = explode("\n", trim(shell_exec($cmd.' 2>/dev/null')));

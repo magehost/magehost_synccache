@@ -4,13 +4,13 @@ namespace MageHost\SyncCache\Model\RestClient;
 class Local
 {
     /** @var \Psr\Log\LoggerInterface */
-    protected $_logger;
+    private $logger;
     /** @var \Magento\Integration\Model\IntegrationService */
-    protected $_integrationService;
+    private $integrationService;
     /** @var \Magento\Integration\Model\Integration */
-    protected $_integration;
+    private $integration;
     /** @var \Zend_Oauth_Http_Utility */
-    protected $_oauthHttpUtility;
+    private $oauthHttpUtility;
 
     /**
      * Local constructor.
@@ -23,25 +23,25 @@ class Local
         \Magento\Integration\Model\IntegrationService $integrationService,
         \Zend_Oauth_Http_Utility $oauthHttpUtility
     ) {
-        $this->_logger = $logger;
-        $this->_integrationService = $integrationService;
-        $this->_oauthHttpUtility = $oauthHttpUtility;
+        $this->logger = $logger;
+        $this->integrationService = $integrationService;
+        $this->oauthHttpUtility = $oauthHttpUtility;
     }
 
     /**
      * @param int $integrationId
-     * @return bool - True if succesful.
+     * @return bool - True if successful.
      */
     public function setIntegrationId($integrationId)
     {
         if (empty($integrationId)) {
-            $this->_logger->error(sprintf('%s: Integration ID not set', __CLASS__));
+            $this->logger->error(sprintf('%s: Integration ID not set', __CLASS__));
             return false;
         }
         try {
-            $this->_integration = $this->_integrationService->get($integrationId);
+            $this->integration = $this->integrationService->get($integrationId);
         } catch (\Magento\Framework\Exception\IntegrationException $e) {
-            $this->_logger->error(sprintf(
+            $this->logger->error(sprintf(
                 '%s: Error using integration %d: %s',
                 __CLASS__,
                 $integrationId,
@@ -60,17 +60,17 @@ class Local
      */
     public function get($url, $hostHeader = '', $sslOffloaded = false)
     {
-        if (empty($this->_integration)) {
-            $this->_logger->error(sprintf('%s: No integration selected', __CLASS__));
+        if (empty($this->integration)) {
+            $this->logger->error(sprintf('%s: No integration selected', __CLASS__));
             return false;
         }
 
         $data = [
-            'oauth_consumer_key' => $this->_integration->getConsumerKey(),
-            'oauth_nonce' => md5(uniqid(rand(), true)),
+            'oauth_consumer_key' => $this->integration->getConsumerKey(),
+            'oauth_nonce' => $this->oauthHttpUtility->generateNonce(),
             'oauth_signature_method' => 'HMAC-SHA1',
             'oauth_timestamp' => time(),
-            'oauth_token' => $this->_integration->getToken(),
+            'oauth_token' => $this->integration->getToken(),
             'oauth_version' => '1.0'
         ];
         $signUrl = $url;
@@ -83,15 +83,14 @@ class Local
             if ($sslOffloaded) {
                 $signUrlParts['scheme'] = 'https';
             }
-            $signUrl = $this->unparse_url($signUrlParts);
-            error_log($signUrl);
+            $signUrl = $this->unParseUrl($signUrlParts);
         }
 
-        $data['oauth_signature'] = $this->_oauthHttpUtility->sign(
+        $data['oauth_signature'] = $this->oauthHttpUtility->sign(
             $data,
             $data['oauth_signature_method'],
-            $this->_integration->getConsumerSecret(),
-            $this->_integration->getTokenSecret(),
+            $this->integration->getConsumerSecret(),
+            $this->integration->getTokenSecret(),
             'GET',
             $signUrl
         );
@@ -115,24 +114,30 @@ class Local
             CURLOPT_HTTPHEADER => $headers
         ]);
 
-        $this->_logger->info(sprintf("%s: Calling %s", __CLASS__, $url));
+        $this->logger->info(sprintf("%s: Calling %s", __CLASS__, $url));
         $result = curl_exec($curl);
         curl_close($curl);
-        $this->_logger->info(sprintf("%s: Result: %s", __CLASS__, var_export($result, 1)));
+        $this->logger->info(sprintf("%s: Result: %s", __CLASS__, var_export($result, 1)));
         return $result;
     }
 
-    private function unparse_url($parsed_url)
+    /**
+     * The opposite of the native PHP function parse_url(), simplified.
+     * Required keys: scheme, host, path
+     *
+     * @param $parsed_url
+     * @return string
+     */
+    private function unParseUrl($parsed_url)
     {
-        $scheme   = isset($parsed_url['scheme']) ? $parsed_url['scheme'] . '://' : '';
-        $host     = isset($parsed_url['host']) ? $parsed_url['host'] : '';
         $port     = isset($parsed_url['port']) ? ':' . $parsed_url['port'] : '';
         $user     = isset($parsed_url['user']) ? $parsed_url['user'] : '';
         $pass     = isset($parsed_url['pass']) ? ':' . $parsed_url['pass']  : '';
         $pass     = ($user || $pass) ? "$pass@" : '';
-        $path     = isset($parsed_url['path']) ? $parsed_url['path'] : '';
         $query    = isset($parsed_url['query']) ? '?' . $parsed_url['query'] : '';
         $fragment = isset($parsed_url['fragment']) ? '#' . $parsed_url['fragment'] : '';
-        return "$scheme$user$pass$host$port$path$query$fragment";
+        return $parsed_url['scheme'] . "://" .
+            $user . $pass . $parsed_url['host'] . $port .
+            $parsed_url['path'] . $query . $fragment;
     }
 }

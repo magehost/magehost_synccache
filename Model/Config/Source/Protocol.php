@@ -12,7 +12,7 @@ class Protocol implements \Magento\Framework\Option\ArrayInterface
     public function toOptionArray()
     {
         return [
-            ['value' => 'http_ssloffloaded', 'label' => __('HTTP with SSL Offloaded')],
+            ['value' => 'http_ssl_offloaded', 'label' => __('HTTP with SSL Offloaded')],
             ['value' => 'http', 'label' => __('HTTP')],
             ['value' => 'https', 'label' => __('HTTPS')]
         ];

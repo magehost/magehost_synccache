@@ -5,22 +5,23 @@ use MageHost\SyncCache\Api\CleanInterface;
 
 class Clean implements CleanInterface
 {
-    /** @var \Magento\Framework\Webapi\Rest\Request */
-    protected $_request;
     /** @var \Magento\Framework\App\Cache\Frontend\Pool */
-    protected $_cacheFrontendPool;
+    private $cacheFrontendPool;
     /** @var \Psr\Log\LoggerInterface */
-    protected $_logger;
+    private $logger;
 
+    /**
+     * Clean constructor.
+     *
+     * @param \Magento\Framework\App\Cache\Frontend\Pool $cacheFrontendPool
+     * @param \Psr\Log\LoggerInterface $logger
+     */
     public function __construct(
-        \Magento\Framework\Webapi\Rest\Request $request,
         \Magento\Framework\App\Cache\Frontend\Pool $cacheFrontendPool,
         \Psr\Log\LoggerInterface $logger
     ) {
-    
-        $this->_request = $request;
-        $this->_cacheFrontendPool = $cacheFrontendPool;
-        $this->_logger = $logger;
+        $this->cacheFrontendPool = $cacheFrontendPool;
+        $this->logger = $logger;
     }
 
     /**
@@ -35,9 +36,9 @@ class Clean implements CleanInterface
     {
         $tags = json_decode($tags_json);
         $hostname = gethostname();
-        $this->_logger->info(
+        $this->logger->info(
             sprintf(
-                "%s:  from:%s  to:%s  mode:%s  tags:%s",
+                "%s:  Received clean request via API  from:%s  to:%s  mode:%s  tags:%s",
                 __CLASS__,
                 $from,
                 $hostname,
@@ -46,7 +47,7 @@ class Clean implements CleanInterface
             )
         );
         if ($hostname == $from) {
-            $this->_logger->info(
+            $this->logger->info(
                 sprintf(
                     "%s:  Loop protection!",
                     __CLASS__
@@ -55,9 +56,9 @@ class Clean implements CleanInterface
             return false;
         }
         $result = null;
-        foreach ($this->_cacheFrontendPool as $cacheFrontend) {
+        foreach ($this->cacheFrontendPool as $cacheFrontend) {
             $frontendResult = $cacheFrontend->getBackend()->clean($mode, $tags);
-            if (is_null($result)) {
+            if (null === $result) {
                 $result = $frontendResult;
             } else {
                 $result = $result && $frontendResult;
