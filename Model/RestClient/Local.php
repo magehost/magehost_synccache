@@ -48,11 +48,12 @@ class Local
     }
 
     /**
-     * @param string $url
-     * @param array $extraHeaders
+     * @param $url
+     * @param string $hostHeader
+     * @param bool $sslOffloaded
      * @return bool|mixed
      */
-    public function get($url,$extraHeaders=array()) {
+    public function get($url,$hostHeader='',$sslOffloaded=false) {
         if (empty($this->_integration)) {
             $this->_logger->error(sprintf('%s: No integration selected',__CLASS__));
             return false;
@@ -66,17 +67,37 @@ class Local
             'oauth_token' => $this->_integration->getToken(),
             'oauth_version' => '1.0'
         ];
+        $signUrl = $url;
+        if (!empty($hostHeader) || $sslOffloaded) {
+            $signUrlParts = parse_url($url);
+            if (!empty($hostHeader)) {
+                $signUrlParts['host'] = $hostHeader;
+                unset($signUrlParts['port']);
+            }
+            if ($sslOffloaded) {
+                $signUrlParts['scheme'] = 'https';
+            }
+            $signUrl = $this->unparse_url($signUrlParts);
+error_log($signUrl);
+        }
+
         $data['oauth_signature'] = $this->_oauthHttpUtility->sign( $data,
             $data['oauth_signature_method'],
             $this->_integration->getConsumerSecret(),
             $this->_integration->getTokenSecret(),
             'GET',
-            $url );
+            $signUrl );
 
         $curl = curl_init();
 
-        $headers = $extraHeaders;
-        $headers[] = 'Authorization: OAuth ' . http_build_query($data, '', ',');
+        $headers = [ 'Authorization: OAuth ' . http_build_query($data, '', ',') ];
+        if (!empty($hostHeader)) {
+            $headers[] = 'Host: ' . $hostHeader;
+        }
+        if ($sslOffloaded) {
+            $headers[] = 'X-Forwarded-Proto: https';
+            $headers[] = 'Ssl-Offloaded: 1';
+        }
 
         curl_setopt_array($curl, [
             CURLOPT_SSL_VERIFYPEER => false,
@@ -91,5 +112,18 @@ class Local
         curl_close($curl);
         $this->_logger->info(sprintf("%s: Result: %s", __CLASS__, var_export($result,1)));
         return $result;
+    }
+
+    private function unparse_url($parsed_url) {
+        $scheme   = isset($parsed_url['scheme']) ? $parsed_url['scheme'] . '://' : '';
+        $host     = isset($parsed_url['host']) ? $parsed_url['host'] : '';
+        $port     = isset($parsed_url['port']) ? ':' . $parsed_url['port'] : '';
+        $user     = isset($parsed_url['user']) ? $parsed_url['user'] : '';
+        $pass     = isset($parsed_url['pass']) ? ':' . $parsed_url['pass']  : '';
+        $pass     = ($user || $pass) ? "$pass@" : '';
+        $path     = isset($parsed_url['path']) ? $parsed_url['path'] : '';
+        $query    = isset($parsed_url['query']) ? '?' . $parsed_url['query'] : '';
+        $fragment = isset($parsed_url['fragment']) ? '#' . $parsed_url['fragment'] : '';
+        return "$scheme$user$pass$host$port$path$query$fragment";
     }
 }

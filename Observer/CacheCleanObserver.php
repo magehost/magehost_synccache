@@ -83,25 +83,25 @@ class CacheCleanObserver implements ObserverInterface
                         // This is local, skip host
                         continue;
                     }
-                    $headers = array();
-                    $configHostHeader = $this->_scopeConfig->getValue(self::CONFIG_PATH . '/host_header');
-                    if (!empty($configHostHeader)) {
-                        $headers[] = 'Host: ' . $configHostHeader;
-                    }
+                    $sslOffloaded = false;
                     $urlProtocol = $this->_scopeConfig->getValue(self::CONFIG_PATH . '/protocol');
                     if ('http_ssloffloaded' == $urlProtocol) {
                         $urlProtocol = 'http';
-                        // @TODO Somehow this results in "Invalid signature" response from REST
-                        // $headers[] = 'X-Forwarded-Proto: https';
-                        $headers[] = 'Ssl-Offloaded: 1';
+                        $sslOffloaded = true;
                     }
-                    $url = sprintf('%s://%s/rest/V1/magehost/synccache/clean/%s/%s/%s/',
+                    $url = sprintf(
+                        '%s://%s/rest/V1/magehost/synccache/clean/%s/%s/%s/',
                         $urlProtocol,
                         $node,
                         $localHostname,
                         urlencode($transportObject->getMode()),
-                        urlencode(json_encode($transportObject->getTags())));
-                    $this->_restClient->get($url, $headers);
+                        urlencode(json_encode($transportObject->getTags()))
+                    );
+                    $this->_restClient->get(
+                        $url,
+                        $this->_scopeConfig->getValue(self::CONFIG_PATH . '/host_header'),
+                        $sslOffloaded
+                    );
                 }
             }
         }
