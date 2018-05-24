@@ -26,13 +26,5 @@
         "psr-4": {
             "MageHost\\SyncCache\\": ""
         }
-    },
-    "extra": {
-        "map": [
-            [
-                "*",
-                "MageHost/SyncCache"
-            ]
-        ]
     }
 }
