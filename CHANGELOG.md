@@ -1,3 +1,7 @@
+### 1.0.1 (2018-05-24)
+
+  * Fix in `composer.json` - thanks to @PascalBrouwers
+  
 ### 1.0.0 (2018-05-21)
 
   * Updated PHPDoc
