@@ -111,7 +111,9 @@ class Local
             CURLOPT_SSL_VERIFYHOST => false,
             CURLOPT_RETURNTRANSFER => 1,
             CURLOPT_URL => $url,
-            CURLOPT_HTTPHEADER => $headers
+            CURLOPT_HTTPHEADER => $headers,
+            CURLOPT_CONNECTTIMEOUT => 2, // seconds
+            CURLOPT_TIMEOUT => 10 // seconds
         ]);
 
         $this->logger->info(sprintf("%s: Calling %s", __CLASS__, $url));

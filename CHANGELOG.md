@@ -1,3 +1,7 @@
+### 1.0.2 (2018-05-29)
+
+  * Added CURL timeouts
+  
 ### 1.0.1 (2018-05-24)
 
   * Fix in `composer.json` - thanks to @PascalBrouwers

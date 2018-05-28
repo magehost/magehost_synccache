@@ -1,6 +1,6 @@
 {
     "name": "magehost/synccache",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "MageHost_SyncCache: sync cache cleaning among multiple nodes in a cluster setup",
     "homepage":"https://github.com/magehost/magehost_synccache",
     "authors":[
