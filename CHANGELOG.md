@@ -1,3 +1,7 @@
+### 1.0.3 (2018-08-29)
+
+  * Bugfix in Integration selection
+
 ### 1.0.2 (2018-05-29)
 
   * Added CURL timeouts
