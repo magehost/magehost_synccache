@@ -26,7 +26,7 @@ class Integration implements \Magento\Framework\Option\ArrayInterface
     {
         $result = [];
         foreach ($this->collection->getData() as $data) {
-            $result[] = ['value' =>  $data['consumer_id'], 'label' => $data['name']];
+            $result[] = ['value' =>  $data['integration_id'], 'label' => $data['name']];
         }
         return $result;
     }
