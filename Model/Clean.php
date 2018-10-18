@@ -31,6 +31,8 @@ class Clean implements CleanInterface
      * @param string $mode - @see \Cm_Cache_Backend_Redis::clean()
      * @param string $tags_json - json encoded array of tags
      * @return boolean true if no problem
+     *
+     * mode: matchingTag  =  matching ALL tags, @see Cm_Cache_Backend_Redis::getIdsMatchingTags
      */
     public function clean($from, $mode, $tags_json)
     {
